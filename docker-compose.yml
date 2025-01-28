@@ -1,0 +1,62 @@
+services:
+  traefik:
+    build:
+      context: ./traefik
+    ports:
+      - "4001:80"
+      - "4002:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - main-app
+      - global-service
+      - private-service
+
+  main-app:
+    build:
+      context: main_app
+    hostname: main.internal
+    environment:
+      - RELEASE_COOKIE=local-1mIJ1VsA9
+      - SECRET_KEY_BASE=$${SECRET_KEY_BASE:local-A6+1M8BjONKQQJcI/CwwvemkjQgPnVw56UJW13QXip4+F0krSGWlmUyAqHQF9not}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.main-app.rule=PathPrefix(`/`) && !PathPrefix(`/services`)"
+      - "traefik.http.services.main-app.loadbalancer.server.port=4000"
+      - "traefik.http.routers.main-app.entrypoints=http"
+
+  global-service:
+    build:
+      context: global_service
+    hostname: global.internal
+    environment:
+      - RELEASE_COOKIE=local-1mIJ1VsA9
+      - ERLANG_SEED_NODES=main_app@main.internal
+      - SECRET_KEY_BASE=$${SECRET_KEY_BASE:local-Hc7PL5+zLbzrIwYdRHF8bcdUa8WCnAKlOfwiUHZdjqP1gZXn+MvkDH/Y6fD0+7kU}
+      - CONTEXT_PATH=/services/global
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.global-service.rule=PathPrefix(`/services/global`)"
+      - "traefik.http.middlewares.global-service-strip.stripprefix.prefixes=/services/global"
+      - "traefik.http.routers.global-service.middlewares=global-service-strip"
+      - "traefik.http.services.global-service.loadbalancer.server.port=4000"
+    depends_on:
+      - main-app
+
+  private-service:
+    build:
+      context: private_service
+    hostname: private.internal
+    environment:
+      - RELEASE_COOKIE=local-1mIJ1VsA9
+      - ERLANG_SEED_NODES=main_app@main.internal
+      - SECRET_KEY_BASE=$${SECRET_KEY_BASE:local-w2JUXE9yXYRqkz092hjJAbSTcQAmm/OfHiQNVbDLHFSen8uAxzyOvLA6c3yxYYmu}
+      - CONTEXT_PATH=/services/private
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.private-service.rule=PathPrefix(`/services/private`)"
+      - "traefik.http.middlewares.private-service-strip.stripprefix.prefixes=/services/private"
+      - "traefik.http.routers.private-service.middlewares=private-service-strip"
+      - "traefik.http.services.private-service.loadbalancer.server.port=4000"
+    depends_on:
+      - main-app

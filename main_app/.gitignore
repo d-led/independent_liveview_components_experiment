@@ -35,3 +35,11 @@ main_app-*.tar
 npm-debug.log
 /assets/node_modules/
 
+/priv/static/assets/
+/priv/static/images/*-*.svg
+/priv/static/images/*.gz
+/priv/static/*.gz
+/priv/static/*-*.txt
+/priv/static/*-*.ico
+
+.elixir_ls/

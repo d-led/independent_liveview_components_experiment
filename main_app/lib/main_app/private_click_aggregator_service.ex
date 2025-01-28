@@ -52,6 +52,7 @@ defmodule MainApp.PrivateClickAggregatorService do
     Enum.each(state, fn {session_id, click_count} ->
       assigns = %{session_id: session_id, count: click_count}
       rendered_view = MainAppWeb.PrivateClickViews.render(assigns)
+
       Phoenix.PubSub.broadcast(MainApp.PubSub, "private_clicks:#{session_id}", %{
         view: :private,
         html: rendered_view

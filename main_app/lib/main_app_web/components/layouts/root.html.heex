@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
+    <meta
+      name="context-path"
+      content={Application.get_env(:main_app, MainAppWeb.Endpoint)[:context_path]}
+    />
     <.live_title default="MainApp" suffix=" · Phoenix Framework">
       {assigns[:page_title]}
     </.live_title>

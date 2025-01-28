@@ -1,0 +1,9 @@
+.dockerignore
+README.*
+_build/
+assets/node_modules/
+deps/
+test/
+Dockerfile
+docker-compose.yml
+.elixir_ls/

@@ -1,0 +1,51 @@
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+  [entryPoints.traefik]
+    address = ":8080"
+
+[providers.docker]
+  endpoint = "unix:///var/run/docker.sock"
+  exposedByDefault = false
+
+# disable in prod
+[api]
+  dashboard = true
+  insecure = true
+
+[log]
+  level = "DEBUG"
+
+[http.routers]
+  [http.routers.main-app]
+    rule = "PathPrefix(`/`) && !PathPrefix(`/services`)"
+    service = "main-app"
+    entryPoints = ["http", "websocket"]
+
+  [http.routers.private-service]
+    rule = "PathPrefix(`/services/private`)"
+    service = "private-service"
+    entryPoints = ["http"]
+
+  [http.routers.global-service]
+    rule = "PathPrefix(`/services/global`)"
+    service = "global-service"
+    entryPoints = ["http"]
+
+  [http.routers.traefik]
+    rule = "PathPrefix(`/dashboard`)"
+    service = "api@internal"
+    entryPoints = ["traefik"]
+
+[http.services]
+  [http.services.main-app.loadBalancer]
+    [[http.services.main-app.loadBalancer.servers]]
+      url = "http://main-app:4000"
+
+  [http.services.private-service.loadBalancer]
+    [[http.services.private-service.loadBalancer.servers]]
+      url = "http://private-service:4000"
+
+  [http.services.global-service.loadBalancer]
+    [[http.services.global-service.loadBalancer.servers]]
+      url = "http://global-service:4000"

@@ -10,6 +10,7 @@ defmodule MainApp.Application do
     children = [
       MainAppWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:main_app, :dns_cluster_query) || :ignore},
+      {Cluster.Supervisor, [topologies() |> IO.inspect(label: "chosen cluster config")]},
       {Phoenix.PubSub, name: MainApp.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: MainApp.Finch},
@@ -34,5 +35,26 @@ defmodule MainApp.Application do
   def config_change(changed, _new, removed) do
     MainAppWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  defp topologies() do
+    case System.get_env("ERLANG_SEED_NODES", "")
+         |> String.split(",") |> Enum.reject(&String.trim(&1) == "")
+         |> Enum.map(&String.to_atom/1) do
+      [] ->
+        [
+          default: [
+            strategy: Cluster.Strategy.Gossip
+          ]
+        ]
+
+      seed_nodes ->
+        [
+          default: [
+            strategy: Cluster.Strategy.Epmd,
+            config: [hosts: seed_nodes]
+          ]
+        ]
+    end
   end
 end
