@@ -1,0 +1,26 @@
+version: "0.5"
+
+# https://f1bonacc1.github.io/process-compose/
+# process-control -f process-control.yaml
+
+log_location: processes.log
+log_level: debug
+
+processes:
+  main:
+    command: "elixir --name main_app@127.0.0.1 -S mix phx.server"
+    working_dir: "./main_app"
+    environment:
+      - "PORT=4000"
+
+  global:
+    command: "elixir --name global_service@127.0.0.1 -S mix phx.server"
+    working_dir: "./global_service"
+    environment:
+      - "PORT=4001"
+
+  private:
+    command: "elixir --name private_service@127.0.0.1 -S mix phx.server"
+    working_dir: "./private_service"
+    environment:
+      - "PORT=4002"

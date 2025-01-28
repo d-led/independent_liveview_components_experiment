@@ -1,5 +1,5 @@
 # build
-FROM elixir:1.17-alpine AS builder
+FROM elixir:1.18-alpine AS builder
 
 ENV MIX_ENV=prod
 
