@@ -10,6 +10,9 @@ import Config
 config :global_service,
   generators: [timestamp_type: :utc_datetime]
 
+config :global_service, MainApp.PubSub,
+  adapter: Phoenix.PubSub.PG2
+
 # Configures the endpoint
 config :global_service, GlobalServiceWeb.Endpoint,
   url: [host: "localhost"],
@@ -18,7 +21,7 @@ config :global_service, GlobalServiceWeb.Endpoint,
     formats: [html: GlobalServiceWeb.ErrorHTML, json: GlobalServiceWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: GlobalService.PubSub,
+  pubsub_server: MainApp.PubSub,
   live_view: [signing_salt: "ydQ3dDFX"]
 
 # Configures the mailer
@@ -29,6 +32,9 @@ config :global_service, GlobalServiceWeb.Endpoint,
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
 config :global_service, GlobalService.Mailer, adapter: Swoosh.Adapters.Local
+
+config :global_service, GlobalService.Presence,
+  pubsub_server: MainApp.PubSub
 
 # Configure esbuild (the version is required)
 config :esbuild,

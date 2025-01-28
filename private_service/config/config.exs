@@ -10,6 +10,9 @@ import Config
 config :private_service,
   generators: [timestamp_type: :utc_datetime]
 
+config :private_service, MainApp.PubSub,
+  adapter: Phoenix.PubSub.PG2
+
 # Configures the endpoint
 config :private_service, PrivateServiceWeb.Endpoint,
   url: [host: "localhost"],
@@ -18,7 +21,7 @@ config :private_service, PrivateServiceWeb.Endpoint,
     formats: [html: PrivateServiceWeb.ErrorHTML, json: PrivateServiceWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: PrivateService.PubSub,
+  pubsub_server: MainApp.PubSub,
   live_view: [signing_salt: "cuyK6RSm"]
 
 # Configures the mailer
@@ -29,6 +32,9 @@ config :private_service, PrivateServiceWeb.Endpoint,
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
 config :private_service, PrivateService.Mailer, adapter: Swoosh.Adapters.Local
+
+config :private_service, PrivateService.Presence,
+  pubsub_server: MainApp.PubSub
 
 # Configure esbuild (the version is required)
 config :esbuild,

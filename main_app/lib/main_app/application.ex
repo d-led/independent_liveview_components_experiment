@@ -16,11 +16,9 @@ defmodule MainApp.Application do
       {Finch, name: MainApp.Finch},
       # Start a worker by calling: MainApp.Worker.start_link(arg)
       # {MainApp.Worker, arg},
+      MainAppWeb.Presence,
       # Start to serve requests, typically the last entry
       MainAppWeb.Endpoint,
-      MainAppWeb.Presence,
-      {MainApp.GlobalClickAggregatorService, []},
-      {MainApp.PrivateClickAggregatorService, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

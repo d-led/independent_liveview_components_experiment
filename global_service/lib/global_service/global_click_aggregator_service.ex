@@ -1,6 +1,7 @@
-defmodule MainApp.GlobalClickAggregatorService do
+defmodule GlobalService.GlobalClickAggregatorService do
   require Logger
   use GenServer
+  import Phoenix.HTML.Safe
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -38,11 +39,12 @@ defmodule MainApp.GlobalClickAggregatorService do
 
   defp render_view_to_channel(count, channel) do
     assigns = %{count: count}
-    rendered_global_clicks = MainAppWeb.GlobalClicksView.render(assigns)
+    rendered_global_clicks = GlobalServiceWeb.GlobalClicksView.render(assigns)
+    html_string = Phoenix.HTML.safe_to_string({:safe, to_iodata(rendered_global_clicks)})
 
     Phoenix.PubSub.broadcast(MainApp.PubSub, channel, %{
       view: :global,
-      html: rendered_global_clicks
+      html: html_string
     })
   end
 

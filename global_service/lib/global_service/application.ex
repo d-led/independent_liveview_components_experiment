@@ -12,7 +12,9 @@ defmodule GlobalService.Application do
       GlobalServiceWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:global_service, :dns_cluster_query) || :ignore},
       {Cluster.Supervisor, [topologies() |> IO.inspect(label: "chosen cluster config")]},
-      {Phoenix.PubSub, name: GlobalService.PubSub},
+      {Phoenix.PubSub, name: MainApp.PubSub},
+      GlobalServiceWeb.Presence,
+      {GlobalService.GlobalClickAggregatorService, []},
       # Start the Finch HTTP client for sending emails
       {Finch, name: GlobalService.Finch},
       # Start a worker by calling: GlobalService.Worker.start_link(arg)

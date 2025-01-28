@@ -1,7 +1,8 @@
-defmodule MainApp.PrivateClickAggregatorService do
+defmodule PrivateService.PrivateClickAggregatorService do
   require Logger
   require Phoenix.PubSub
   use GenServer
+  import Phoenix.HTML.Safe
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -51,11 +52,12 @@ defmodule MainApp.PrivateClickAggregatorService do
 
     Enum.each(state, fn {session_id, click_count} ->
       assigns = %{session_id: session_id, count: click_count}
-      rendered_view = MainAppWeb.PrivateClickViews.render(assigns)
+      rendered_view = PrivateServiceWeb.PrivateClickViews.render(assigns)
+      html_string = Phoenix.HTML.safe_to_string({:safe, to_iodata(rendered_view)})
 
       Phoenix.PubSub.broadcast(MainApp.PubSub, "private_clicks:#{session_id}", %{
         view: :private,
-        html: rendered_view
+        html: html_string
       })
     end)
   end

@@ -10,6 +10,9 @@ import Config
 config :main_app,
   generators: [timestamp_type: :utc_datetime]
 
+config :main_app, MainApp.PubSub,
+  adapter: Phoenix.PubSub.PG2
+
 # Configures the endpoint
 config :main_app, MainAppWeb.Endpoint,
   url: [host: "localhost"],

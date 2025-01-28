@@ -34,7 +34,7 @@ defmodule MainAppWeb.MainLive do
       <div class="col-span-1 w-full border border-light-gray-300 p-4 relative">
         <div class="absolute -top-3 left-4 bg-white px-1">Private</div>
         <%= if @private_clicks do %>
-          {@private_clicks}
+          <%= Phoenix.HTML.raw(@private_clicks) %>
         <% end %>
       </div>
       <div class="col-span-1 w-full h-full border border-light-gray-300 p-4 relative">
@@ -54,7 +54,7 @@ defmodule MainAppWeb.MainLive do
       <div class="col-span-1 w-full h-full border border-light-gray-300 p-4 relative">
         <div class="absolute -top-3 left-4 bg-white px-1">Global</div>
         <%= if @rendered_global_clicks do %>
-          {@rendered_global_clicks}
+          <%= Phoenix.HTML.raw(@rendered_global_clicks) %>
         <% end %>
       </div>
     </div>
