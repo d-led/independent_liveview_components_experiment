@@ -18,6 +18,7 @@ services:
     hostname: main.internal
     environment:
       - RELEASE_COOKIE=local-1mIJ1VsA9
+      - LOG_LEVEL=debug
       - SECRET_KEY_BASE=$${SECRET_KEY_BASE:local-A6+1M8BjONKQQJcI/CwwvemkjQgPnVw56UJW13QXip4+F0krSGWlmUyAqHQF9not}
     labels:
       - "traefik.enable=true"
@@ -31,6 +32,7 @@ services:
     hostname: global.internal
     environment:
       - RELEASE_COOKIE=local-1mIJ1VsA9
+      - LOG_LEVEL=debug
       - ERLANG_SEED_NODES=main_app@main.internal
       - SECRET_KEY_BASE=$${SECRET_KEY_BASE:local-Hc7PL5+zLbzrIwYdRHF8bcdUa8WCnAKlOfwiUHZdjqP1gZXn+MvkDH/Y6fD0+7kU}
       - CONTEXT_PATH=/services/global
@@ -49,6 +51,7 @@ services:
     hostname: private.internal
     environment:
       - RELEASE_COOKIE=local-1mIJ1VsA9
+      - LOG_LEVEL=debug
       - ERLANG_SEED_NODES=main_app@main.internal
       - SECRET_KEY_BASE=$${SECRET_KEY_BASE:local-w2JUXE9yXYRqkz092hjJAbSTcQAmm/OfHiQNVbDLHFSen8uAxzyOvLA6c3yxYYmu}
       - CONTEXT_PATH=/services/private

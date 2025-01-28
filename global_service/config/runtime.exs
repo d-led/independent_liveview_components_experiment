@@ -104,3 +104,5 @@ if config_env() == :prod do
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end
+
+config :logger, level: String.to_atom(System.get_env("LOG_LEVEL", "info"))
