@@ -25,6 +25,7 @@ defmodule MainApp.GlobalClickAggregatorService do
     rendered_global_clicks = MainAppWeb.GlobalClicksView.render(assigns)
 
     Phoenix.PubSub.broadcast(MainApp.PubSub, "global_rendering_topic", %{
+      view: :global,
       html: rendered_global_clicks
     })
   end

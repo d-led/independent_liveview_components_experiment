@@ -5,16 +5,18 @@ defmodule MainAppWeb.MainLive do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(MainApp.PubSub, "global_topic")
       Phoenix.PubSub.subscribe(MainApp.PubSub, "global_rendering_topic")
+      Phoenix.PubSub.subscribe(MainApp.PubSub, "private_clicks:#{id_of(socket)}")
       MainAppWeb.Presence.track(self(), "presence:lobby", id_of(socket), %{})
     end
 
-    {:ok, assign(socket, click_logs: [], rendered_global_clicks: nil)}
+    {:ok, assign(socket, click_logs: [], rendered_global_clicks: nil, private_clicks: nil)}
   end
 
   def render(assigns) do
     ~H"""
     <div class="grid grid-cols-2 gap-4 w-full h-full">
-      <div class="col-span-1 w-full">
+      <div class="col-span-1 w-full border border-light-gray-300 p-4 relative">
+        <div class="absolute -top-3 left-4 bg-white px-1">Interaction</div>
         <button
           phx-click="click"
           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -22,17 +24,22 @@ defmodule MainAppWeb.MainLive do
           Click me!
         </button>
       </div>
-      <div class="col-span-1 w-full">
-        2
+      <div class="col-span-1 w-full border border-light-gray-300 p-4 relative">
+        <div class="absolute -top-3 left-4 bg-white px-1">Private</div>
+        <%= if @private_clicks do %>
+          {@private_clicks}
+        <% end %>
       </div>
-      <div class="col-span-1 w-full h-full">
+      <div class="col-span-1 w-full h-full border border-light-gray-300 p-4 relative">
+        <div class="absolute -top-3 left-4 bg-white px-1">All clicks</div>
         <ul class="font-mono">
           <%= for log <- @click_logs do %>
             <li>{log}</li>
           <% end %>
         </ul>
       </div>
-      <div class="col-span-1 w-full h-full">
+      <div class="col-span-1 w-full h-full border border-light-gray-300 p-4 relative">
+        <div class="absolute -top-3 left-4 bg-white px-1">Public</div>
         <%= if @rendered_global_clicks do %>
           {@rendered_global_clicks}
         <% end %>
@@ -64,8 +71,12 @@ defmodule MainAppWeb.MainLive do
     {:noreply, assign(socket, :click_logs, click_logs)}
   end
 
-  def handle_info(%{html: rendered_global_clicks}, socket) do
-    {:noreply, assign(socket, :rendered_global_clicks, rendered_global_clicks)}
+  def handle_info(%{view: :global, html: html}, socket) do
+    {:noreply, assign(socket, :rendered_global_clicks, html)}
+  end
+
+  def handle_info(%{view: :private, html: html}, socket) do
+    {:noreply, assign(socket, :private_clicks, html)}
   end
 
   defp id_of(%{id: id}) do

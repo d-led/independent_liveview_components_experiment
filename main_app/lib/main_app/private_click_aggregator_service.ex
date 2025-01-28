@@ -17,7 +17,7 @@ defmodule MainApp.PrivateClickAggregatorService do
   def handle_info(%{event: "click", session_id: session_id}, state) do
     Logger.debug("PrivateClickAggregatorService click from session #{session_id}")
     new_state = Map.update(state, session_id, 1, &(&1 + 1))
-    show_state(new_state)
+    render_view(new_state)
     {:noreply, new_state}
   end
 
@@ -41,11 +41,21 @@ defmodule MainApp.PrivateClickAggregatorService do
 
     Logger.debug("leaves: #{inspect(leaves)}")
     Logger.debug("joins: #{inspect(joins)}")
-    show_state(new_state)
+    Logger.debug("current: #{inspect(new_state)}")
+    render_view(new_state)
     {:noreply, new_state}
   end
 
-  def show_state(state) do
+  def render_view(state) do
     Logger.debug("now online: #{inspect(state)}")
+
+    Enum.each(state, fn {session_id, click_count} ->
+      assigns = %{session_id: session_id, count: click_count}
+      rendered_view = MainAppWeb.PrivateClickViews.render(assigns)
+      Phoenix.PubSub.broadcast(MainApp.PubSub, "private_clicks:#{session_id}", %{
+        view: :private,
+        html: rendered_view
+      })
+    end)
   end
 end
