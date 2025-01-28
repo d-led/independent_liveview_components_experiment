@@ -17,7 +17,7 @@ defmodule PrivateServiceWeb.Router do
   scope "/", PrivateServiceWeb do
     pipe_through :browser
 
-    live "/", MainLive
+    live "/", MainLive, :home
   end
 
   # Other scopes may use custom stacks.
