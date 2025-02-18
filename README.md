@@ -37,3 +37,4 @@
 ## Start with docker compose
 
 - `docker compose up` (with other options depending on the needs)
+- &rarr; http://localhost:4001
