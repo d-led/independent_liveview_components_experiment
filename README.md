@@ -17,6 +17,7 @@
 - very chatty/wasteful:
   - rendered partial HTML views are sent from the services, instead of the optimized configuration as known in LiveView
 - current docker compose / libcluster config creates a sporadically disconnected cluster
+- presence messages seem to not reach the services
 
 ### Pending Ideas
 
