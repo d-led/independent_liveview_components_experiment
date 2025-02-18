@@ -18,6 +18,7 @@
   - rendered partial HTML views are sent from the services, instead of the optimized configuration as known in LiveView
 - current docker compose / libcluster config creates a sporadically disconnected cluster
 - presence messages seem to not reach the services
+  - work-around: when a main LiveView is mounted, a custom `hi` message is published into the `arrivals` channel, requesting a rendered UI from the services.
 
 ### Pending Ideas
 

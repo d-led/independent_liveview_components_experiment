@@ -8,6 +8,11 @@ defmodule MainAppWeb.MainLive do
       Phoenix.PubSub.subscribe(MainApp.PubSub, "private_clicks:#{id_of(socket)}")
       Phoenix.PubSub.subscribe(MainApp.PubSub, "initial_renders:#{id_of(socket)}")
       MainAppWeb.Presence.track(self(), "presence:lobby", id_of(socket), %{})
+      Phoenix.PubSub.broadcast(MainApp.PubSub, "arrivals", %{
+        event: "hi",
+        session_id: id_of(socket),
+        timestamp: timestamp()
+      })
     end
 
     {:ok,
@@ -64,16 +69,10 @@ defmodule MainAppWeb.MainLive do
   def handle_event("click", _params, socket) do
     session_id = id_of(socket)
 
-    timestamp =
-      DateTime.utc_now()
-      |> DateTime.truncate(:second)
-      |> DateTime.to_iso8601()
-      |> String.trim_trailing("Z")
-
     Phoenix.PubSub.broadcast(MainApp.PubSub, "global_topic", %{
       event: "click",
       session_id: session_id,
-      timestamp: timestamp
+      timestamp: timestamp()
     })
 
     {:noreply, socket}
@@ -99,5 +98,12 @@ defmodule MainAppWeb.MainLive do
   defp update_cluster_size(socket) do
     nodes_in_cluster = length(Node.list())
     assign(socket, :nodes_in_cluster, nodes_in_cluster)
+  end
+
+  defp timestamp() do
+      DateTime.utc_now()
+      |> DateTime.truncate(:second)
+      |> DateTime.to_iso8601()
+      |> String.trim_trailing("Z")
   end
 end

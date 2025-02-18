@@ -9,6 +9,7 @@ defmodule GlobalService.GlobalClickAggregatorService do
 
   def init(_) do
     Phoenix.PubSub.subscribe(MainApp.PubSub, "global_topic")
+    Phoenix.PubSub.subscribe(MainApp.PubSub, "arrivals")
     Phoenix.PubSub.subscribe(MainApp.PubSub, "presence:lobby")
     Logger.debug("Starting GlobalClickAggregatorService")
     {:ok, %{global_clicks: 0}}
@@ -22,6 +23,12 @@ defmodule GlobalService.GlobalClickAggregatorService do
     {:noreply, new_state}
   end
 
+  def handle_info(%{event: "hi", session_id: session_id}, state) do
+    Logger.debug("GlobalClickAggregatorService hi from session #{session_id}")
+    render_view(state.global_clicks)
+    {:noreply, state}
+  end
+
   def handle_info(
         %Phoenix.Socket.Broadcast{
           topic: "presence:lobby",
@@ -31,6 +38,7 @@ defmodule GlobalService.GlobalClickAggregatorService do
         state
       ) do
     Enum.each(joins, fn {session_id, _} ->
+      Logger.debug("trying to send a view to #{session_id}")
       render_view_to_channel(state.global_clicks, "initial_renders:#{session_id}")
     end)
 
