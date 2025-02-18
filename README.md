@@ -25,6 +25,9 @@
 - 3 LiveView sockets
   - potentially served via the same reverse proxy under different paths
 - other approaches, unifying the LiveView socket?
+- when a service goes doesn / hasn't sent updates in a while, show a `currently unavailable` message in the main view
+  - custom monitor?
+  - custom scheduled messages to `self()` in main LiveView?
 
 ### Failed Approaches
 
