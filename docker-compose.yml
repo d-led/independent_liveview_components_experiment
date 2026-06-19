@@ -13,6 +13,7 @@ services:
       - private-service
 
   main-app:
+    image: ghcr.io/d-led/independent_liveview_components_experiment/main-app:latest
     build:
       context: main_app
     hostname: main.internal
@@ -27,6 +28,7 @@ services:
       - "traefik.http.routers.main-app.entrypoints=http"
 
   global-service:
+    image: ghcr.io/d-led/independent_liveview_components_experiment/global-service:latest
     build:
       context: global_service
     hostname: global.internal
@@ -46,6 +48,7 @@ services:
       - main-app
 
   private-service:
+    image: ghcr.io/d-led/independent_liveview_components_experiment/private-service:latest
     build:
       context: private_service
     hostname: private.internal

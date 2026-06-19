@@ -74,29 +74,37 @@ flowchart TD
 
 #### 4. Team Independence via Module Spreading
 
-Each service team deploys their own compiled view module independently.
-The module only travels **once** at cluster join time; only small data payloads cross PubSub per event.
+Each service team deploys their own compiled view module **and** an independent aggregator GenServer.
+The module travels **once** at cluster join; per-event traffic is only small data payloads.
 
 ```mermaid
 flowchart TD
     subgraph private_service["private_service node"]
         PSModuleSharer["ModuleSharer\n(GenServer)"]
-        PSViews["PrivateServiceWeb.PrivateClickViews\n(compiled BEAM module)"]
-        PSAgg["PrivateClickAggregatorService"]
+        PSAgg["PrivateClickAggregatorService\n(GenServer — keeps per-session counters)"]
     end
 
     subgraph main_app["main_app node"]
-        MAModuleSharer["ModuleSharer\n(receives modules)"]
+        MAModuleSharer["ModuleSharer\n(receives & loads modules)"]
         MALive["MainAppWeb.MainLive"]
+        ClickEvent["User click"]
     end
 
-    PSModuleSharer -->|":nodeup → :code.get_object_code/1\n→ broadcast on 'modules:sync'"| MAModuleSharer
-    MAModuleSharer -->|":code.load_binary/3\n→ local_broadcast 'modules:new:local'"| MALive
+    PSModuleSharer -->|"at :nodeup\n:code.get_object_code → broadcast 'modules:sync'\n:code.load_binary on main_app\n→ one-time BEAM bytecode transfer"| MAModuleSharer
+    MAModuleSharer -.->|"module now available locally"| MALive
 
-    PSAgg -->|"PubSub broadcast\n{view: :private, count: N}\non 'private_clicks:session_id'"| MALive
-
-    MALive -->|"apply(PrivateServiceWeb.PrivateClickViews, :render, [assigns])\n← module already loaded locally"| MALive
+    ClickEvent -->|"PubSub broadcast\n'global_topic'"| PSAgg
+    PSAgg -->|"per-event: {view: :private, count: N}\nbroadcast on 'private_clicks:session_id'"| MALive
+    MALive -->|"apply(PrivateServiceWeb.PrivateClickViews,\n  :render, [%{count: N}])\n← module already loaded locally"| MALive
 ```
+
+**How it actually works — step by step:**
+
+1. User clicks → `main_app` broadcasts the raw event on `global_topic` (clustered PubSub).
+2. The service's aggregator GenServer (on its own node) receives the event and updates its own in-process state (`count++` per session).
+3. Only the computed result (`{count: N}`) is broadcast back on `private_clicks:session_id`.
+4. `main_app` stores the number and renders using the already-loaded view module.
+5. No re-processing on `main_app`. No HTML crosses the wire.
 
 **What travels and when:**
 
@@ -105,6 +113,14 @@ flowchart TD
 | BEAM module bytecode | Once, on cluster join | ~KB, once |
 | Event data (`count`, `session_id`) | Per user interaction | Tiny |
 | HTML | Never — rendering is local on `main_app` | — |
+
+> **Honest caveat:** The aggregation **does** run on the service nodes — only the computed
+> result (`count: N`) is communicated back to `main_app`, never the raw events for
+> re-processing. The pattern is architecturally correct.
+> The criticism is about **weight**: maintaining a click counter is too trivial to justify
+> the overhead of a separate cluster node. The architecture becomes genuinely valuable
+> when the service has heavier independent concerns — complex domain logic, a separate
+> database, a different release cadence, or a team that can't touch `main_app`.
 
 ### Challenges
 
