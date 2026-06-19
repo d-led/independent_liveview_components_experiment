@@ -157,3 +157,11 @@ flowchart TD
 - &rarr; http://localhost:4000
   - http://localhost:4001
   - http://localhost:4002
+
+## Running Tests
+
+To run tests across all Elixir applications in the workspace consecutively, use the provided helper script:
+
+```bash
+./scripts/test-all.sh
+```
