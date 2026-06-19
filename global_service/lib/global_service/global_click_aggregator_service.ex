@@ -1,4 +1,5 @@
 defmodule GlobalService.GlobalClickAggregatorService do
+  @moduledoc false
   require Logger
   use GenServer
 
@@ -35,23 +36,27 @@ defmodule GlobalService.GlobalClickAggregatorService do
     new_clicks = state.global_clicks + 1
     Logger.debug("Total clicks: #{new_clicks}")
     sent = render_view(new_clicks)
+
     new_state = %{
-      state |
-      global_clicks: new_clicks,
-      recv_bytes: state.recv_bytes + byte_size_of(msg),
-      sent_bytes: state.sent_bytes + sent
+      state
+      | global_clicks: new_clicks,
+        recv_bytes: state.recv_bytes + byte_size_of(msg),
+        sent_bytes: state.sent_bytes + sent
     }
+
     {:noreply, new_state}
   end
 
   def handle_info(%{event: "hi", session_id: session_id} = msg, state) do
     Logger.debug("GlobalClickAggregatorService hi from session #{session_id}")
     sent = render_view(state.global_clicks)
+
     new_state = %{
-      state |
-      recv_bytes: state.recv_bytes + byte_size_of(msg),
-      sent_bytes: state.sent_bytes + sent
+      state
+      | recv_bytes: state.recv_bytes + byte_size_of(msg),
+        sent_bytes: state.sent_bytes + sent
     }
+
     {:noreply, new_state}
   end
 
@@ -70,10 +75,11 @@ defmodule GlobalService.GlobalClickAggregatorService do
       end)
 
     new_state = %{
-      state |
-      recv_bytes: state.recv_bytes + byte_size_of(msg),
-      sent_bytes: state.sent_bytes + sent
+      state
+      | recv_bytes: state.recv_bytes + byte_size_of(msg),
+        sent_bytes: state.sent_bytes + sent
     }
+
     {:noreply, new_state}
   end
 

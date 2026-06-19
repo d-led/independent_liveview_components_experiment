@@ -10,8 +10,7 @@ import Config
 config :global_service,
   generators: [timestamp_type: :utc_datetime]
 
-config :global_service, MainApp.PubSub,
-  adapter: Phoenix.PubSub.PG2
+config :global_service, MainApp.PubSub, adapter: Phoenix.PubSub.PG2
 
 # Configures the endpoint
 config :global_service, GlobalServiceWeb.Endpoint,
@@ -37,8 +36,7 @@ config :phoenix_live_view,
 # at the `config/runtime.exs`.
 config :global_service, GlobalService.Mailer, adapter: Swoosh.Adapters.Local
 
-config :global_service, GlobalService.Presence,
-  pubsub_server: MainApp.PubSub
+config :global_service, GlobalService.Presence, pubsub_server: MainApp.PubSub
 
 # Configure esbuild (the version is required)
 config :esbuild,

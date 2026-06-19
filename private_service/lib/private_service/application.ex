@@ -10,7 +10,7 @@ defmodule PrivateService.Application do
     children = [
       PrivateServiceWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:private_service, :dns_cluster_query) || :ignore},
-      {Cluster.Supervisor, [topologies() |> IO.inspect(label: "chosen cluster config")]},
+      {Cluster.Supervisor, [topologies()]},
       {Phoenix.PubSub, name: MainApp.PubSub},
       MainAppWeb.Presence,
       {PrivateService.PrivateClickAggregatorService, []},
@@ -35,9 +35,10 @@ defmodule PrivateService.Application do
     :ok
   end
 
-  defp topologies() do
+  defp topologies do
     case System.get_env("ERLANG_SEED_NODES", "")
-         |> String.split(",") |> Enum.reject(&String.trim(&1) == "")
+         |> String.split(",")
+         |> Enum.reject(&(String.trim(&1) == ""))
          |> Enum.map(&String.to_atom/1) do
       [] ->
         [

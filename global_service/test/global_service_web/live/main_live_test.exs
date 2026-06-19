@@ -27,7 +27,14 @@ defmodule GlobalServiceWeb.MainLiveTest do
 
   test "handle_info/2 view count updates clicks count" do
     socket = %Phoenix.LiveView.Socket{assigns: %{__changed__: %{}}}
-    socket = Phoenix.Component.assign(socket, clicks: 0, backend_sent: 0, backend_recv: 0, ui_recv_bytes: 0)
+
+    socket =
+      Phoenix.Component.assign(socket,
+        clicks: 0,
+        backend_sent: 0,
+        backend_recv: 0,
+        ui_recv_bytes: 0
+      )
 
     state = GlobalService.GlobalClickAggregatorService.get_state()
     count = state.global_clicks

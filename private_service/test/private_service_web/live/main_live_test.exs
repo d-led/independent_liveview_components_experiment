@@ -27,13 +27,15 @@ defmodule PrivateServiceWeb.MainLiveTest do
 
   test "handle_info/2 presence:lobby broadcast updates sessions and presence" do
     socket = %Phoenix.LiveView.Socket{assigns: %{__changed__: %{}}}
-    socket = Phoenix.Component.assign(socket,
-      sessions: %{},
-      online_sessions: [],
-      backend_sent: 0,
-      backend_recv: 0,
-      ui_recv_bytes: 0
-    )
+
+    socket =
+      Phoenix.Component.assign(socket,
+        sessions: %{},
+        online_sessions: [],
+        backend_sent: 0,
+        backend_recv: 0,
+        ui_recv_bytes: 0
+      )
 
     msg = %Phoenix.Socket.Broadcast{
       topic: "presence:lobby",

@@ -2,7 +2,6 @@ defmodule GlobalService.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @moduledoc false
-  require Logger
 
   use Application
 
@@ -11,7 +10,7 @@ defmodule GlobalService.Application do
     children = [
       GlobalServiceWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:global_service, :dns_cluster_query) || :ignore},
-      {Cluster.Supervisor, [topologies() |> IO.inspect(label: "chosen cluster config")]},
+      {Cluster.Supervisor, [topologies()]},
       {Phoenix.PubSub, name: MainApp.PubSub},
       MainAppWeb.Presence,
       {GlobalService.GlobalClickAggregatorService, []},
@@ -36,9 +35,10 @@ defmodule GlobalService.Application do
     :ok
   end
 
-  defp topologies() do
+  defp topologies do
     case System.get_env("ERLANG_SEED_NODES", "")
-         |> String.split(",") |> Enum.reject(&String.trim(&1) == "")
+         |> String.split(",")
+         |> Enum.reject(&(String.trim(&1) == ""))
          |> Enum.map(&String.to_atom/1) do
       [] ->
         [

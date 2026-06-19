@@ -27,6 +27,7 @@ defmodule MainAppWeb.MainLive do
           session_id: id_of(socket),
           timestamp: timestamp()
         }
+
         broadcast_and_measure(socket, "arrivals", msg)
       else
         socket
@@ -50,7 +51,9 @@ defmodule MainAppWeb.MainLive do
       <div class="col-span-1 w-full border border-light-gray-300 p-4 relative">
         <div class="absolute -top-3 left-4 bg-white px-1">Sessions Service</div>
         <%= if Code.ensure_loaded?(PrivateServiceWeb.PrivateClickViews) and @private_clicks_count do %>
-          {apply(PrivateServiceWeb.PrivateClickViews, :render, [%{count: @private_clicks_count, session_id: @session_id}])}
+          {apply(PrivateServiceWeb.PrivateClickViews, :render, [
+            %{count: @private_clicks_count, session_id: @session_id}
+          ])}
         <% else %>
           <p class="text-gray-400">Waiting for Sessions service component...</p>
         <% end %>
@@ -78,7 +81,7 @@ defmodule MainAppWeb.MainLive do
         <div class="absolute -top-3 left-4 bg-white px-1">Local</div>
         <div>
           <h1>Cluster</h1>
-          <p>Node name: <%= Node.self() %></p>
+          <p>Node name: {Node.self()}</p>
           <p :if={@nodes_in_cluster > 0}>Nodes in cluster: {@nodes_in_cluster + 1}</p>
         </div>
         <h1 :if={length(@click_logs) > 0}>Log</h1>
@@ -108,11 +111,13 @@ defmodule MainAppWeb.MainLive do
 
   def handle_event("click", _params, socket) do
     session_id = id_of(socket)
+
     msg = %{
       event: "click",
       session_id: session_id,
       timestamp: timestamp()
     }
+
     socket = broadcast_and_measure(socket, "global_topic", msg)
     {:noreply, socket}
   end
@@ -120,6 +125,7 @@ defmodule MainAppWeb.MainLive do
   def handle_info(%{event: "click", session_id: session_id, timestamp: timestamp} = msg, socket) do
     bytes = :erlang.term_to_binary(msg) |> byte_size()
     click_logs = ["#{timestamp}: #{session_id} clicked" | socket.assigns.click_logs]
+
     {:noreply,
      assign(socket, :click_logs, click_logs)
      |> update_cluster_size()
@@ -128,6 +134,7 @@ defmodule MainAppWeb.MainLive do
 
   def handle_info(%{view: :global, count: count} = msg, socket) do
     bytes = :erlang.term_to_binary(msg) |> byte_size()
+
     {:noreply,
      assign(socket, :global_clicks_count, count)
      |> update_cluster_size()
@@ -136,6 +143,7 @@ defmodule MainAppWeb.MainLive do
 
   def handle_info(%{view: :private, count: count} = msg, socket) do
     bytes = :erlang.term_to_binary(msg) |> byte_size()
+
     {:noreply,
      assign(socket, :private_clicks_count, count)
      |> update_cluster_size()
@@ -144,6 +152,7 @@ defmodule MainAppWeb.MainLive do
 
   def handle_info({:new_module_local, _mod} = msg, socket) do
     bytes = :erlang.term_to_binary(msg) |> byte_size()
+
     {:noreply,
      update_cluster_size(socket)
      |> update(:pubsub_recv_bytes, &(&1 + bytes))}
@@ -163,7 +172,7 @@ defmodule MainAppWeb.MainLive do
     assign(socket, :nodes_in_cluster, nodes_in_cluster)
   end
 
-  defp timestamp() do
+  defp timestamp do
     DateTime.utc_now()
     |> DateTime.truncate(:second)
     |> DateTime.to_iso8601()

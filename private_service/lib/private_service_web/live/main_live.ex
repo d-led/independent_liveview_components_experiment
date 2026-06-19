@@ -31,7 +31,9 @@ defmodule PrivateServiceWeb.MainLive do
     ~H"""
     <div class="py-6 max-w-lg">
       <h1 class="text-2xl font-bold mb-4">Sessions Service Dashboard</h1>
-      <p class="text-sm text-gray-500 mb-4">Displays session-specific click counts tracked by the Sessions Service.</p>
+      <p class="text-sm text-gray-500 mb-4">
+        Displays session-specific click counts tracked by the Sessions Service.
+      </p>
 
       <div class="bg-gray-50 border rounded p-4 mb-4">
         <h2 class="text-lg font-semibold mb-2">Pub/Sub Traffic</h2>
@@ -85,6 +87,7 @@ defmodule PrivateServiceWeb.MainLive do
 
   def handle_info(%{event: "click", session_id: session_id} = msg, socket) do
     bytes = :erlang.term_to_binary(msg) |> byte_size()
+
     {:noreply,
      socket
      |> update(:sessions, &Map.update(&1, session_id, 1, fn c -> c + 1 end))
@@ -93,9 +96,12 @@ defmodule PrivateServiceWeb.MainLive do
 
   def handle_info(%Phoenix.Socket.Broadcast{topic: "presence:lobby"} = msg, socket) do
     bytes = :erlang.term_to_binary(msg) |> byte_size()
+
     %{sessions: sessions, sent_bytes: backend_sent, recv_bytes: backend_recv} =
       PrivateService.PrivateClickAggregatorService.get_state()
+
     online_sessions = MainAppWeb.Presence.list("presence:lobby") |> Map.keys()
+
     {:noreply,
      assign(socket,
        sessions: sessions,

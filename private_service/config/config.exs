@@ -10,8 +10,7 @@ import Config
 config :private_service,
   generators: [timestamp_type: :utc_datetime]
 
-config :private_service, MainApp.PubSub,
-  adapter: Phoenix.PubSub.PG2
+config :private_service, MainApp.PubSub, adapter: Phoenix.PubSub.PG2
 
 # Configures the endpoint
 config :private_service, PrivateServiceWeb.Endpoint,
@@ -37,8 +36,7 @@ config :phoenix_live_view,
 # at the `config/runtime.exs`.
 config :private_service, PrivateService.Mailer, adapter: Swoosh.Adapters.Local
 
-config :private_service, PrivateService.Presence,
-  pubsub_server: MainApp.PubSub
+config :private_service, PrivateService.Presence, pubsub_server: MainApp.PubSub
 
 # Configure esbuild (the version is required)
 config :esbuild,

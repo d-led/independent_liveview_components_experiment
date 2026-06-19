@@ -10,7 +10,7 @@ defmodule MainApp.Application do
     children = [
       MainAppWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:main_app, :dns_cluster_query) || :ignore},
-      {Cluster.Supervisor, [topologies() |> IO.inspect(label: "chosen cluster config")]},
+      {Cluster.Supervisor, [topologies()]},
       {Phoenix.PubSub, name: MainApp.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: MainApp.Finch},
@@ -18,7 +18,7 @@ defmodule MainApp.Application do
       MainAppWeb.Presence,
       {ModuleSharer, share: []},
       # Start to serve requests, typically the last entry
-      MainAppWeb.Endpoint,
+      MainAppWeb.Endpoint
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -35,9 +35,10 @@ defmodule MainApp.Application do
     :ok
   end
 
-  defp topologies() do
+  defp topologies do
     case System.get_env("ERLANG_SEED_NODES", "")
-         |> String.split(",") |> Enum.reject(&String.trim(&1) == "")
+         |> String.split(",")
+         |> Enum.reject(&(String.trim(&1) == ""))
          |> Enum.map(&String.to_atom/1) do
       [] ->
         [

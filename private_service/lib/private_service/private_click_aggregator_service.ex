@@ -1,6 +1,6 @@
 defmodule PrivateService.PrivateClickAggregatorService do
+  @moduledoc false
   require Logger
-  require Phoenix.PubSub
   use GenServer
 
   def start_link(_opts) do
@@ -27,12 +27,14 @@ defmodule PrivateService.PrivateClickAggregatorService do
     Logger.debug("PrivateClickAggregatorService click from session #{session_id}")
     new_sessions = Map.update(state.sessions, session_id, 1, &(&1 + 1))
     sent = render_view(new_sessions)
+
     new_state = %{
-      state |
-      sessions: new_sessions,
-      recv_bytes: state.recv_bytes + byte_size_of(msg),
-      sent_bytes: state.sent_bytes + sent
+      state
+      | sessions: new_sessions,
+        recv_bytes: state.recv_bytes + byte_size_of(msg),
+        sent_bytes: state.sent_bytes + sent
     }
+
     {:noreply, new_state}
   end
 
@@ -40,11 +42,13 @@ defmodule PrivateService.PrivateClickAggregatorService do
     Logger.debug("PrivateClickAggregatorService hi from session #{session_id}")
     click_count = Map.get(state.sessions, session_id, 0)
     sent = render_one(session_id, click_count)
+
     new_state = %{
-      state |
-      recv_bytes: state.recv_bytes + byte_size_of(msg),
-      sent_bytes: state.sent_bytes + sent
+      state
+      | recv_bytes: state.recv_bytes + byte_size_of(msg),
+        sent_bytes: state.sent_bytes + sent
     }
+
     {:noreply, new_state}
   end
 
@@ -65,12 +69,14 @@ defmodule PrivateService.PrivateClickAggregatorService do
     Logger.debug("joins: #{inspect(joins)}")
     Logger.debug("current: #{inspect(new_sessions)}")
     sent = render_view(new_sessions)
+
     new_state = %{
-      state |
-      sessions: new_sessions,
-      recv_bytes: state.recv_bytes + byte_size_of(msg),
-      sent_bytes: state.sent_bytes + sent
+      state
+      | sessions: new_sessions,
+        recv_bytes: state.recv_bytes + byte_size_of(msg),
+        sent_bytes: state.sent_bytes + sent
     }
+
     {:noreply, new_state}
   end
 

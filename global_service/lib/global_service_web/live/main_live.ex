@@ -24,7 +24,9 @@ defmodule GlobalServiceWeb.MainLive do
     ~H"""
     <div class="py-6 max-w-lg">
       <h1 class="text-2xl font-bold mb-4">Global Service Dashboard</h1>
-      <p class="text-sm text-gray-500 mb-4">Displays global click counts and live logs tracked by the Global Service.</p>
+      <p class="text-sm text-gray-500 mb-4">
+        Displays global click counts and live logs tracked by the Global Service.
+      </p>
 
       <div class="bg-gray-100 p-4 rounded mb-4">
         <p class="text-lg">Total clicks: <span class="font-bold">{@clicks}</span></p>
@@ -48,7 +50,7 @@ defmodule GlobalServiceWeb.MainLive do
           </div>
         </div>
       </div>
-      
+
       <h2 class="text-lg font-semibold mb-2">Live Click Feed</h2>
       <ul class="font-mono bg-white border rounded p-2 h-48 overflow-y-auto mb-4">
         <%= if length(@logs) == 0 do %>
@@ -69,6 +71,7 @@ defmodule GlobalServiceWeb.MainLive do
 
   def handle_info(%{event: "click", session_id: session_id, timestamp: timestamp} = msg, socket) do
     bytes = :erlang.term_to_binary(msg) |> byte_size()
+
     {:noreply,
      socket
      |> update(:logs, &["#{timestamp}: #{session_id} clicked" | &1])
@@ -77,8 +80,10 @@ defmodule GlobalServiceWeb.MainLive do
 
   def handle_info(%{view: :global, count: count} = msg, socket) do
     bytes = :erlang.term_to_binary(msg) |> byte_size()
+
     %{global_clicks: ^count, sent_bytes: backend_sent, recv_bytes: backend_recv} =
       GlobalService.GlobalClickAggregatorService.get_state()
+
     {:noreply,
      assign(socket,
        clicks: count,
