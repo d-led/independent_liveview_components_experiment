@@ -60,13 +60,18 @@ defmodule PrivateServiceWeb.MainLive do
         <h2 class="text-lg font-semibold mb-2">Pub/Sub Traffic</h2>
         <div class="grid grid-cols-2 gap-4 text-xs font-mono text-gray-600">
           <div>
-            <p class="font-bold text-gray-700 mb-1">Clustered Aggregator (global & private topics):</p>
-            <p>Sent: {@backend_sent} bytes</p>
+            <p class="font-bold text-gray-700 mb-1">Aggregator recv from:</p>
+            <p><code>global_topic</code></p>
+            <p><code>arrivals</code></p>
+            <p><code>presence:lobby</code></p>
+            <p class="mt-1">Sent: {@backend_sent} bytes</p>
             <p>Recv: {@backend_recv} bytes</p>
           </div>
           <div>
-            <p class="font-bold text-gray-700 mb-1">Dashboard UI Socket (local topics):</p>
-            <p>Recv: {@ui_recv_bytes} bytes</p>
+            <p class="font-bold text-gray-700 mb-1">Dashboard UI recv from:</p>
+            <p><code>global_topic</code></p>
+            <p><code>presence:lobby</code></p>
+            <p class="mt-1">Recv: {@ui_recv_bytes} bytes</p>
           </div>
         </div>
       </div>
