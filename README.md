@@ -154,6 +154,6 @@ flowchart TD
 ## Start with docker compose
 
 - `docker compose up` (with other options depending on the needs)
-- &rarr; http://localhost:4001
-  - http://localhost:4001/services/global
-  - http://localhost:4001/services/private
+- &rarr; http://localhost:4000
+  - http://localhost:4001
+  - http://localhost:4002
