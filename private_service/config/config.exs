@@ -24,6 +24,10 @@ config :private_service, PrivateServiceWeb.Endpoint,
   pubsub_server: MainApp.PubSub,
   live_view: [signing_salt: "cuyK6RSm"]
 
+# Configure LiveView
+config :phoenix_live_view,
+  root_tag_attribute: "phx-r"
+
 # Configures the mailer
 #
 # By default it uses the "Local" adapter which stores the emails
@@ -38,12 +42,12 @@ config :private_service, PrivateService.Presence,
 
 # Configure esbuild (the version is required)
 config :esbuild,
-  version: "0.17.11",
+  version: "0.25.4",
   private_service: [
     args:
-      ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
+      ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
     cd: Path.expand("../assets", __DIR__),
-    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+    env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
   ]
 
 # Configure tailwind (the version is required)
@@ -55,7 +59,8 @@ config :tailwind,
       --input=css/app.css
       --output=../priv/static/assets/app.css
     ),
-    cd: Path.expand("../assets", __DIR__)
+    cd: Path.expand("../assets", __DIR__),
+    env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
   ]
 
 # Configures Elixir's Logger

@@ -7,6 +7,7 @@ defmodule MainAppWeb.MainLive do
       Phoenix.PubSub.subscribe(MainApp.PubSub, "global_rendering_topic")
       Phoenix.PubSub.subscribe(MainApp.PubSub, "private_clicks:#{id_of(socket)}")
       Phoenix.PubSub.subscribe(MainApp.PubSub, "initial_renders:#{id_of(socket)}")
+      Phoenix.PubSub.subscribe(MainApp.PubSub, "modules:new:local")
       MainAppWeb.Presence.track(self(), "presence:lobby", id_of(socket), %{})
       Phoenix.PubSub.broadcast(MainApp.PubSub, "arrivals", %{
         event: "hi",
@@ -18,8 +19,9 @@ defmodule MainAppWeb.MainLive do
     {:ok,
      assign(socket,
        click_logs: [],
-       rendered_global_clicks: nil,
-       private_clicks: nil,
+       global_clicks_count: nil,
+       private_clicks_count: nil,
+       session_id: id_of(socket),
        nodes_in_cluster: 0
      )}
   end
@@ -37,9 +39,11 @@ defmodule MainAppWeb.MainLive do
         </button>
       </div>
       <div class="col-span-1 w-full border border-light-gray-300 p-4 relative">
-        <div class="absolute -top-3 left-4 bg-white px-1">Private</div>
-        <%= if @private_clicks do %>
-          <%= Phoenix.HTML.raw(@private_clicks) %>
+        <div class="absolute -top-3 left-4 bg-white px-1">Sessions Service</div>
+        <%= if Code.ensure_loaded?(PrivateServiceWeb.PrivateClickViews) and @private_clicks_count do %>
+          {apply(PrivateServiceWeb.PrivateClickViews, :render, [%{count: @private_clicks_count, session_id: @session_id}])}
+        <% else %>
+          <p class="text-gray-400">Waiting for Sessions service component...</p>
         <% end %>
       </div>
       <div class="col-span-1 w-full h-full border border-light-gray-300 p-4 relative">
@@ -57,10 +61,18 @@ defmodule MainAppWeb.MainLive do
         </ul>
       </div>
       <div class="col-span-1 w-full h-full border border-light-gray-300 p-4 relative">
-        <div class="absolute -top-3 left-4 bg-white px-1">Global</div>
-        <%= if @rendered_global_clicks do %>
-          <%= Phoenix.HTML.raw(@rendered_global_clicks) %>
+        <div class="absolute -top-3 left-4 bg-white px-1">Global Service</div>
+        <%= if Code.ensure_loaded?(GlobalServiceWeb.GlobalClicksView) and @global_clicks_count do %>
+          {apply(GlobalServiceWeb.GlobalClicksView, :render, [%{count: @global_clicks_count}])}
+        <% else %>
+          <p class="text-gray-400">Waiting for Global service component...</p>
         <% end %>
+      </div>
+      <div class="col-span-2 mt-4 pt-4 border-t border-gray-200 text-sm text-gray-500 flex gap-4">
+        <span class="font-semibold">Other UIs:</span>
+        <a href="http://localhost:4001" target="_blank" class="text-blue-500 hover:underline">Global Service (:4001)</a>
+        <span>|</span>
+        <a href="http://localhost:4002" target="_blank" class="text-blue-500 hover:underline">Sessions Service (:4002)</a>
       </div>
     </div>
     """
@@ -83,12 +95,16 @@ defmodule MainAppWeb.MainLive do
     {:noreply, assign(socket, :click_logs, click_logs) |> update_cluster_size()}
   end
 
-  def handle_info(%{view: :global, html: html}, socket) do
-    {:noreply, assign(socket, :rendered_global_clicks, html) |> update_cluster_size()}
+  def handle_info(%{view: :global, count: count}, socket) do
+    {:noreply, assign(socket, :global_clicks_count, count) |> update_cluster_size()}
   end
 
-  def handle_info(%{view: :private, html: html}, socket) do
-    {:noreply, assign(socket, :private_clicks, html) |> update_cluster_size()}
+  def handle_info(%{view: :private, count: count}, socket) do
+    {:noreply, assign(socket, :private_clicks_count, count) |> update_cluster_size()}
+  end
+
+  def handle_info({:new_module_local, _mod}, socket) do
+    {:noreply, update_cluster_size(socket)}
   end
 
   defp id_of(%{id: id}) do

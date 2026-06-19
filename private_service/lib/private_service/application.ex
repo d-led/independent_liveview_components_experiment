@@ -12,12 +12,11 @@ defmodule PrivateService.Application do
       {DNSCluster, query: Application.get_env(:private_service, :dns_cluster_query) || :ignore},
       {Cluster.Supervisor, [topologies() |> IO.inspect(label: "chosen cluster config")]},
       {Phoenix.PubSub, name: MainApp.PubSub},
-      PrivateServiceWeb.Presence,
+      MainAppWeb.Presence,
+      {PrivateService.PrivateClickAggregatorService, []},
+      {ModuleSharer, share: [PrivateServiceWeb.PrivateClickViews]},
       # Start the Finch HTTP client for sending emails
       {Finch, name: PrivateService.Finch},
-      # Start a worker by calling: PrivateService.Worker.start_link(arg)
-      # {PrivateService.Worker, arg},
-      {PrivateService.PrivateClickAggregatorService, []},
       # Start to serve requests, typically the last entry
       PrivateServiceWeb.Endpoint
     ]

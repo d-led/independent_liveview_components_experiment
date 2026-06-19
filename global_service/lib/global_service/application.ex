@@ -13,12 +13,11 @@ defmodule GlobalService.Application do
       {DNSCluster, query: Application.get_env(:global_service, :dns_cluster_query) || :ignore},
       {Cluster.Supervisor, [topologies() |> IO.inspect(label: "chosen cluster config")]},
       {Phoenix.PubSub, name: MainApp.PubSub},
-      GlobalServiceWeb.Presence,
+      MainAppWeb.Presence,
       {GlobalService.GlobalClickAggregatorService, []},
+      {ModuleSharer, share: [GlobalServiceWeb.GlobalClicksView]},
       # Start the Finch HTTP client for sending emails
       {Finch, name: GlobalService.Finch},
-      # Start a worker by calling: GlobalService.Worker.start_link(arg)
-      # {GlobalService.Worker, arg},
       # Start to serve requests, typically the last entry
       GlobalServiceWeb.Endpoint
     ]

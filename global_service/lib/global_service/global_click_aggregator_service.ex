@@ -1,10 +1,13 @@
 defmodule GlobalService.GlobalClickAggregatorService do
   require Logger
   use GenServer
-  import Phoenix.HTML.Safe
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  end
+
+  def get_count do
+    GenServer.call(__MODULE__, :get_count)
   end
 
   def init(_) do
@@ -13,6 +16,10 @@ defmodule GlobalService.GlobalClickAggregatorService do
     Phoenix.PubSub.subscribe(MainApp.PubSub, "presence:lobby")
     Logger.debug("Starting GlobalClickAggregatorService")
     {:ok, %{global_clicks: 0}}
+  end
+
+  def handle_call(:get_count, _from, state) do
+    {:reply, state.global_clicks, state}
   end
 
   def handle_info(%{event: "click", session_id: session_id}, state) do
@@ -46,13 +53,9 @@ defmodule GlobalService.GlobalClickAggregatorService do
   end
 
   defp render_view_to_channel(count, channel) do
-    assigns = %{count: count}
-    rendered_global_clicks = GlobalServiceWeb.GlobalClicksView.render(assigns)
-    html_string = Phoenix.HTML.safe_to_string({:safe, to_iodata(rendered_global_clicks)})
-
     Phoenix.PubSub.broadcast(MainApp.PubSub, channel, %{
       view: :global,
-      html: html_string
+      count: count
     })
   end
 

@@ -15,8 +15,8 @@ defmodule MainApp.Application do
       # Start the Finch HTTP client for sending emails
       {Finch, name: MainApp.Finch},
       # Start a worker by calling: MainApp.Worker.start_link(arg)
-      # {MainApp.Worker, arg},
       MainAppWeb.Presence,
+      {ModuleSharer, share: []},
       # Start to serve requests, typically the last entry
       MainAppWeb.Endpoint,
     ]
