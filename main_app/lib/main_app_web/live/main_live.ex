@@ -55,6 +55,25 @@ defmodule MainAppWeb.MainLive do
           <p class="text-gray-400">Waiting for Sessions service component...</p>
         <% end %>
       </div>
+      <div class="col-span-2 bg-gray-50 border rounded p-4">
+        <h2 class="text-lg font-semibold mb-2">Pub/Sub Traffic</h2>
+        <div class="grid grid-cols-2 gap-4 text-xs font-mono text-gray-600">
+          <div>
+            <p class="font-bold text-gray-700 mb-1">Sent on:</p>
+            <p><code>global_topic</code></p>
+            <p><code>arrivals</code></p>
+            <p class="mt-1">Sent: {@pubsub_sent_bytes} bytes</p>
+          </div>
+          <div>
+            <p class="font-bold text-gray-700 mb-1">Recv from:</p>
+            <p><code>global_topic</code></p>
+            <p><code>global_rendering_topic</code></p>
+            <p><code>private_clicks:*</code></p>
+            <p><code>modules:new:local</code></p>
+            <p class="mt-1">Recv: {@pubsub_recv_bytes} bytes</p>
+          </div>
+        </div>
+      </div>
       <div class="col-span-1 w-full h-full border border-light-gray-300 p-4 relative">
         <div class="absolute -top-3 left-4 bg-white px-1">Local</div>
         <div>
@@ -76,25 +95,6 @@ defmodule MainAppWeb.MainLive do
         <% else %>
           <p class="text-gray-400">Waiting for Global service component...</p>
         <% end %>
-      </div>
-      <div class="col-span-2 bg-gray-50 border rounded p-4">
-        <h2 class="text-lg font-semibold mb-2">Pub/Sub Traffic</h2>
-        <div class="grid grid-cols-2 gap-4 text-xs font-mono text-gray-600">
-          <div>
-            <p class="font-bold text-gray-700 mb-1">Sent on:</p>
-            <p><code>global_topic</code></p>
-            <p><code>arrivals</code></p>
-            <p class="mt-1">Sent: {@pubsub_sent_bytes} bytes</p>
-          </div>
-          <div>
-            <p class="font-bold text-gray-700 mb-1">Recv from:</p>
-            <p><code>global_topic</code></p>
-            <p><code>global_rendering_topic</code></p>
-            <p><code>private_clicks:*</code></p>
-            <p><code>modules:new:local</code></p>
-            <p class="mt-1">Recv: {@pubsub_recv_bytes} bytes</p>
-          </div>
-        </div>
       </div>
       <div class="col-span-2 pt-2 border-t border-gray-200 text-sm text-gray-500 flex gap-4 items-center">
         <span class="font-semibold">Other UIs:</span>
