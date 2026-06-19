@@ -2,14 +2,13 @@ defmodule PrivateServiceWeb.MainLive do
   use PrivateServiceWeb, :live_view
 
   def mount(_params, _session, socket) do
-    sessions = 
-      if connected?(socket) do
-        Phoenix.PubSub.subscribe(MainApp.PubSub, "global_topic")
-        Phoenix.PubSub.subscribe(MainApp.PubSub, "presence:lobby")
-        PrivateService.PrivateClickAggregatorService.get_state()
-      else
-        %{}
-      end
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(MainApp.PubSub, "global_topic")
+      Phoenix.PubSub.subscribe(MainApp.PubSub, "presence:lobby")
+    end
+
+    %{sessions: sessions, sent_bytes: backend_sent, recv_bytes: backend_recv} =
+      PrivateService.PrivateClickAggregatorService.get_state()
 
     online_sessions =
       if connected?(socket) do
@@ -18,7 +17,14 @@ defmodule PrivateServiceWeb.MainLive do
         []
       end
 
-    {:ok, assign(socket, sessions: sessions, online_sessions: online_sessions)}
+    {:ok,
+     assign(socket,
+       sessions: sessions,
+       online_sessions: online_sessions,
+       backend_sent: backend_sent,
+       backend_recv: backend_recv,
+       ui_recv_bytes: 0
+     )}
   end
 
   def render(assigns) do
@@ -50,6 +56,21 @@ defmodule PrivateServiceWeb.MainLive do
         <% end %>
       </div>
 
+      <div class="bg-gray-50 border rounded p-4 mb-4">
+        <h2 class="text-lg font-semibold mb-2">Pub/Sub Traffic</h2>
+        <div class="grid grid-cols-2 gap-4 text-xs font-mono text-gray-600">
+          <div>
+            <p class="font-bold text-gray-700 mb-1">Clustered Aggregator (global & private topics):</p>
+            <p>Sent: {@backend_sent} bytes</p>
+            <p>Recv: {@backend_recv} bytes</p>
+          </div>
+          <div>
+            <p class="font-bold text-gray-700 mb-1">Dashboard UI Socket (local topics):</p>
+            <p>Recv: {@ui_recv_bytes} bytes</p>
+          </div>
+        </div>
+      </div>
+
       <div class="mt-6 text-sm">
         <a href="http://localhost:4000" class="text-blue-500 hover:underline">&larr; Back to Main App</a>
       </div>
@@ -57,15 +78,31 @@ defmodule PrivateServiceWeb.MainLive do
     """
   end
 
-  def handle_info(%{event: "click", session_id: session_id}, socket) do
-    {:noreply, update(socket, :sessions, &Map.update(&1, session_id, 1, fn c -> c + 1 end))}
+  def handle_info(%{event: "click", session_id: session_id} = msg, socket) do
+    bytes = :erlang.term_to_binary(msg) |> byte_size()
+    {:noreply,
+     socket
+     |> update(:sessions, &Map.update(&1, session_id, 1, fn c -> c + 1 end))
+     |> update(:ui_recv_bytes, &(&1 + bytes))}
   end
 
-  def handle_info(%Phoenix.Socket.Broadcast{topic: "presence:lobby"}, socket) do
-    sessions = PrivateService.PrivateClickAggregatorService.get_state()
+  def handle_info(%Phoenix.Socket.Broadcast{topic: "presence:lobby"} = msg, socket) do
+    bytes = :erlang.term_to_binary(msg) |> byte_size()
+    %{sessions: sessions, sent_bytes: backend_sent, recv_bytes: backend_recv} =
+      PrivateService.PrivateClickAggregatorService.get_state()
     online_sessions = MainAppWeb.Presence.list("presence:lobby") |> Map.keys()
-    {:noreply, assign(socket, sessions: sessions, online_sessions: online_sessions)}
+    {:noreply,
+     assign(socket,
+       sessions: sessions,
+       online_sessions: online_sessions,
+       backend_sent: backend_sent,
+       backend_recv: backend_recv
+     )
+     |> update(:ui_recv_bytes, &(&1 + bytes))}
   end
 
-  def handle_info(_, socket), do: {:noreply, socket}
+  def handle_info(msg, socket) do
+    bytes = :erlang.term_to_binary(msg) |> byte_size()
+    {:noreply, update(socket, :ui_recv_bytes, &(&1 + bytes))}
+  end
 end
