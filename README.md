@@ -66,40 +66,58 @@ flowchart TD
 ```
 
 #### 3. Session Presence & Status Tracking
-Shows how Phoenix Presence tracks session IDs and replicates their online/offline state across nodes.
+
+- `MainLive.mount` calls `Presence.track/4` with the session ID into `"presence:lobby"`.
+- Phoenix Presence replicates state across nodes using an internal CRDT — no extra infra needed.
+- The Sessions Service subscribes to `"presence:lobby"` and renders a green dot for online sessions, gray for offline.
+- Caveat: presence diffs don't always reach services reliably in a gossip-based cluster; a `"hi"` message on the `arrivals` topic serves as a workaround on mount.
+
+#### 4. Team Independence via Module Spreading
+
+Each service team deploys their own compiled view module independently.
+The module only travels **once** at cluster join time; only small data payloads cross PubSub per event.
 
 ```mermaid
 flowchart TD
-    User([User Browser]) -->|Connects| MainLive["MainAppWeb.MainLive"]
-    
-    %% Local Tracking
-    MainLive -->|1. Presence.track/4| PresenceMain["MainAppWeb.Presence (main_app)"]
-    
-    %% Cluster Sync
-    PresenceMain <-->|2. Internal replication| PresencePrivate["MainAppWeb.Presence (private_service)"]
-    
-    %% Status update
-    PresencePrivate -->|3. Broadcast presence_diff| PresenceTopic["Topic: presence:lobby"]
-    PresenceTopic -->|4. Receives diff| PrivateLive["PrivateServiceWeb.MainLive"]
-    
-    %% UI display
-    PrivateLive -->|5. Renders green/gray dot| AdminUI([Sessions Dashboard UI])
+    subgraph private_service["private_service node"]
+        PSModuleSharer["ModuleSharer\n(GenServer)"]
+        PSViews["PrivateServiceWeb.PrivateClickViews\n(compiled BEAM module)"]
+        PSAgg["PrivateClickAggregatorService"]
+    end
+
+    subgraph main_app["main_app node"]
+        MAModuleSharer["ModuleSharer\n(receives modules)"]
+        MALive["MainAppWeb.MainLive"]
+    end
+
+    PSModuleSharer -->|":nodeup → :code.get_object_code/1\n→ broadcast on 'modules:sync'"| MAModuleSharer
+    MAModuleSharer -->|":code.load_binary/3\n→ local_broadcast 'modules:new:local'"| MALive
+
+    PSAgg -->|"PubSub broadcast\n{view: :private, count: N}\non 'private_clicks:session_id'"| MALive
+
+    MALive -->|"apply(PrivateServiceWeb.PrivateClickViews, :render, [assigns])\n← module already loaded locally"| MALive
 ```
+
+**What travels and when:**
+
+| What | When | Size |
+|------|------|------|
+| BEAM module bytecode | Once, on cluster join | ~KB, once |
+| Event data (`count`, `session_id`) | Per user interaction | Tiny |
+| HTML | Never — rendering is local on `main_app` | — |
 
 ### Challenges
 
-- very chatty/wasteful:
-  - rendered partial HTML views are sent from the services, instead of the optimized configuration as known in LiveView
 - current docker compose / libcluster config creates a sporadically disconnected cluster
-- presence messages seem to not reach the services
-  - work-around: when a main LiveView is mounted, a custom `hi` message is published into the `arrivals` channel, requesting a rendered UI from the services.
+- presence diffs don't always reach services reliably across gossip-based cluster nodes
+  - workaround: a custom `"hi"` message is published to `arrivals` on LiveView mount, triggering a fresh render from services
 
 ### Pending Ideas
 
 - 3 LiveView sockets
   - potentially served via the same reverse proxy under different paths
 - other approaches, unifying the LiveView socket?
-- when a service goes doesn / hasn't sent updates in a while, show a `currently unavailable` message in the main view
+- when a service goes down / hasn't sent updates in a while, show a `currently unavailable` message in the main view
   - custom monitor?
   - custom scheduled messages to `self()` in main LiveView?
 
@@ -107,6 +125,7 @@ flowchart TD
 
 - trying to render the diffs only:
   - unfortunately, this failed with the diff (?) functions not being present on the `main_app`
+
 
 ## Start with process-compose
 
