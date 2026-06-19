@@ -1,0 +1,113 @@
+name: CI · private-service
+
+on:
+  push:
+    paths:
+      - "private_service/**"
+      - ".github/workflows/ci-private-service.yml"
+  pull_request:
+    paths:
+      - "private_service/**"
+      - ".github/workflows/ci-private-service.yml"
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}/private-service
+
+jobs:
+  test:
+    name: mix test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: private_service
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.20"
+          otp-version: "29"
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            private_service/deps
+            private_service/_build
+          key: ${{ runner.os }}-mix-private_service-${{ hashFiles('private_service/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-private_service-
+
+      - run: mix deps.get
+      - run: mix test
+
+  docker:
+    name: Build · Smoke · Push
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - name: Build image (load locally for smoke test)
+        uses: docker/build-push-action@v7
+        with:
+          context: private_service
+          load: true
+          push: false
+          tags: smoke-private-service:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test
+        run: |
+          docker run -d --name smoke \
+            -p 4000:4000 \
+            -e SECRET_KEY_BASE="$(openssl rand -hex 64)" \
+            -e RELEASE_COOKIE=smoke-test \
+            smoke-private-service:local
+
+          echo "Waiting for app to start..."
+          for i in $(seq 1 30); do
+            sleep 2
+            if curl -sf http://localhost:4000/ | grep -q "Sessions Service Dashboard"; then
+              echo "✓ Smoke test passed"
+              docker stop smoke
+              exit 0
+            fi
+            echo "  attempt $i/30..."
+          done
+
+          echo "✗ Smoke test failed — container logs:"
+          docker logs smoke
+          docker stop smoke
+          exit 1
+
+      - name: Push to registry
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "${{ steps.meta.outputs.tags }}" | while IFS= read -r tag; do
+            [ -n "$tag" ] || continue
+            docker tag smoke-private-service:local "$tag"
+            docker push "$tag"
+          done
