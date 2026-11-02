@@ -12,7 +12,7 @@ defmodule PrivateService.Application do
       {DNSCluster, query: Application.get_env(:private_service, :dns_cluster_query) || :ignore},
       {Cluster.Supervisor, [topologies()]},
       {Phoenix.PubSub, name: MainApp.PubSub},
-      MainAppWeb.Presence,
+      Cluster.Presence,
       {PrivateService.PrivateClickAggregatorService, []},
       {ModuleSharer, share: [PrivateServiceWeb.PrivateClickViews]},
       # Start the Finch HTTP client for sending emails

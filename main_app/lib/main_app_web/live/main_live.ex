@@ -20,7 +20,7 @@ defmodule MainAppWeb.MainLive do
         Phoenix.PubSub.subscribe(MainApp.PubSub, "private_clicks:#{id_of(socket)}")
         Phoenix.PubSub.subscribe(MainApp.PubSub, "initial_renders:#{id_of(socket)}")
         Phoenix.PubSub.subscribe(MainApp.PubSub, "modules:new:local")
-        MainAppWeb.Presence.track(self(), "presence:lobby", id_of(socket), %{})
+        Cluster.Presence.track(self(), "presence:lobby", id_of(socket), %{})
 
         msg = %{
           event: "hi",

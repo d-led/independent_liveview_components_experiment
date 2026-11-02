@@ -36,8 +36,6 @@ config :phoenix_live_view,
 # at the `config/runtime.exs`.
 config :private_service, PrivateService.Mailer, adapter: Swoosh.Adapters.Local
 
-config :private_service, PrivateService.Presence, pubsub_server: MainApp.PubSub
-
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",

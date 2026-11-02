@@ -8,6 +8,12 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 SKIP_DIALYZER="${SKIP_DIALYZER:-false}"
 
+check_presence_identity() {
+  echo ""
+  echo "--> Checking presence tracker identity..."
+  "${SCRIPT_DIR}/check-presence-identity.sh"
+}
+
 run_quality_gates() {
   local app_dir="$1"
   local app_name="$2"
@@ -40,6 +46,8 @@ run_quality_gates() {
   echo "--> Running ExUnit tests..."
   mix test
 }
+
+check_presence_identity
 
 run_quality_gates "main_app" "Main App"
 run_quality_gates "global_service" "Global Service"

@@ -12,7 +12,7 @@ defmodule GlobalService.Application do
       {DNSCluster, query: Application.get_env(:global_service, :dns_cluster_query) || :ignore},
       {Cluster.Supervisor, [topologies()]},
       {Phoenix.PubSub, name: MainApp.PubSub},
-      MainAppWeb.Presence,
+      Cluster.Presence,
       {GlobalService.GlobalClickAggregatorService, []},
       {ModuleSharer, share: [GlobalServiceWeb.GlobalClicksView]},
       # Start the Finch HTTP client for sending emails

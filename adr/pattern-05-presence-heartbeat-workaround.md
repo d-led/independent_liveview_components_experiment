@@ -6,8 +6,21 @@
 
 Phoenix Presence provides CRDT-based distributed session tracking.
 Services subscribe to `"presence:lobby"` to know which users are online.
-However, in a gossip-based cluster (libcluster), `presence_diff` messages
-don't always reach services reliably after a node join or network hiccup.
+
+**Root cause (diagnosed 2026-11).** The apps declared three differently named
+presence modules (`MainAppWeb.Presence`, `PrivateServiceWeb.Presence`,
+`GlobalServiceWeb.Presence`). `Phoenix.Presence` uses the module name as the
+tracker identity and puts it in the replication topic
+(`phx_presence:Elixir.MainAppWeb.Presence_shard0`), so those trackers never
+replicated with each other: the services' view was empty, not merely late.
+All apps now declare `Cluster.Presence` in their own tree — same name, their own
+`otp_app`, no shared package or shared deploy unit — and
+`scripts/check-presence-identity.sh` fails the build if an app names its
+presence module anything else.
+
+What remains is eventual consistency: `presence_diff` is edge-triggered, so a
+node that joins after sessions were already tracked stays empty until its
+tracker has exchanged heartbeats with a peer — 15 s when the cluster is idle.
 
 ## Forces
 
@@ -15,7 +28,6 @@ don't always reach services reliably after a node join or network hiccup.
 - **Reliable delivery:** Services must know about new sessions
 - **Gossip cluster:** libcluster's eventual consistency means diffs can be lost
 - **Minimal workaround:** Don't rearchitect the whole presence system
-
 ## Solution
 
 On LiveView mount, broadcast a lightweight `"hi"` message on a dedicated
@@ -26,7 +38,7 @@ signal. Presence remains the primary mechanism; `arrivals` patches the gap.
 # main_app mount — after Presence.track, send heartbeat:
 def mount(_params, _session, socket) do
   if connected?(socket) do
-    MainAppWeb.Presence.track(self(), "presence:lobby", id_of(socket), %{})
+    Cluster.Presence.track(self(), "presence:lobby", id_of(socket), %{})
 
     # Workaround: ensure services know about this session
     msg = %{event: "hi", session_id: id_of(socket), timestamp: timestamp()}
@@ -65,12 +77,13 @@ end
 
 ## Resulting Context
 
-- ✓ Patches Presence delivery gaps in gossip clusters
+- ✓ Patches the startup window: a freshly mounted UI gets current state
 - ✓ Minimal overhead — one small message per mount
 - ✓ Idempotent — duplicate "hi" messages cause no harm
-- ✗ **It's a hack.** The root cause (unreliable presence_diff) remains
+- ✗ **It's a hack.** The diff flow is correct, but a node that starts after
+  sessions exist is blind until its tracker syncs
 - ✗ Adds coupling: services must handle both presence_diff AND arrivals
-- ✗ Doesn't fix the underlying libcluster gossip issue
+- ✗ Doesn't make presence state available sooner; it only triggers a re-render
 
 ## Known Uses
 

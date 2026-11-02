@@ -70,7 +70,8 @@ flowchart TD
 - `MainLive.mount` calls `Presence.track/4` with the session ID into `"presence:lobby"`.
 - Phoenix Presence replicates state across nodes using an internal CRDT — no extra infra needed.
 - The Sessions Service subscribes to `"presence:lobby"` and renders a green dot for online sessions, gray for offline.
-- Caveat: presence diffs don't always reach services reliably in a gossip-based cluster; a `"hi"` message on the `arrivals` topic serves as a workaround on mount.
+- Presence identity is `Cluster.Presence`, declared by each app in its own tree (three teams, three independent releases). The tracker name *is* the cluster-wide identity (`phx_presence:Elixir.Cluster.Presence_shard0`), so a differently named module replicates on a different topic and never sees the others — silently. `scripts/check-presence-identity.sh` enforces the name.
+- Caveat: presence is eventually consistent. A node that starts after sessions were already tracked stays empty until its tracker has exchanged heartbeats with a peer (15 s when the cluster is idle); the `"hi"` message on the `arrivals` topic lets a freshly mounted UI get current state immediately.
 
 #### 4. Team Independence via Module Spreading
 
@@ -125,7 +126,7 @@ flowchart TD
 ### Challenges
 
 - current docker compose / libcluster config creates a sporadically disconnected cluster
-- presence diffs don't always reach services reliably across gossip-based cluster nodes
+- presence is eventually consistent: a node that joins after sessions were tracked stays empty until its tracker has synced with a peer (15 s idle heartbeat by default)
   - workaround: a custom `"hi"` message is published to `arrivals` on LiveView mount, triggering a fresh render from services
 
 ### Pending Ideas

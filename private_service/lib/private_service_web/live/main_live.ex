@@ -12,7 +12,7 @@ defmodule PrivateServiceWeb.MainLive do
 
     online_sessions =
       if connected?(socket) do
-        MainAppWeb.Presence.list("presence:lobby") |> Map.keys()
+        Cluster.Presence.list("presence:lobby") |> Map.keys()
       else
         []
       end
@@ -100,7 +100,7 @@ defmodule PrivateServiceWeb.MainLive do
     %{sessions: sessions, sent_bytes: backend_sent, recv_bytes: backend_recv} =
       PrivateService.PrivateClickAggregatorService.get_state()
 
-    online_sessions = MainAppWeb.Presence.list("presence:lobby") |> Map.keys()
+    online_sessions = Cluster.Presence.list("presence:lobby") |> Map.keys()
 
     {:noreply,
      assign(socket,
