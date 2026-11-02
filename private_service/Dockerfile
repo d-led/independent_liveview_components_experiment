@@ -1,5 +1,5 @@
 # build
-FROM elixir:1.20-alpine AS builder
+FROM elixir:1.20.5-otp-29-alpine AS builder
 
 ENV MIX_ENV=prod
 
@@ -18,7 +18,7 @@ COPY . .
 RUN ./mix_release.sh
 
 # deployment
-FROM alpine:3
+FROM alpine:3.24.3
 
 ENV MIX_ENV=prod
 
