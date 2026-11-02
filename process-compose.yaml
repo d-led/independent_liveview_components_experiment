@@ -6,21 +6,24 @@ version: "0.5"
 log_location: processes.log
 log_level: debug
 
+# Ports are shifted off the 4000-4002 range, which is routinely taken by
+# other local Phoenix projects; keep them contiguous so the cluster is easy
+# to find.
 processes:
   main:
     command: "mix setup && elixir --name main_app@127.0.0.1 -S mix phx.server"
     working_dir: "./main_app"
     environment:
-      - "PORT=4000"
+      - "PORT=4100"
 
   global:
     command: "mix setup && elixir --name global_service@127.0.0.1 -S mix phx.server"
     working_dir: "./global_service"
     environment:
-      - "PORT=4001"
+      - "PORT=4101"
 
   private:
     command: "mix setup && elixir --name private_service@127.0.0.1 -S mix phx.server"
     working_dir: "./private_service"
     environment:
-      - "PORT=4002"
+      - "PORT=4102"
